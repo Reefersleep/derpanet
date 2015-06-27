@@ -7,7 +7,7 @@
 
 
 (defn number-box [number text-color]
-  (let [box-size (atom 20)] 
+  (let [box-size (atom 35)] 
     [:p 
      {:style {:border-color "black"
               :float "left"
@@ -26,14 +26,13 @@
                                                   :left "50%"
                                                   :transform "translate(-50%, -50%)" 
                                                   }}(str number)]]))
-
-;; :table-layout "fixed"
 (defn timeout [ms]
   (let [c (chan)]
     (js/setTimeout (fn [] (close! c)) ms)
     c))
 
-(defn cells-around [cell-pointer cells] (drop (- cell-pointer 10) (take (+ cell-pointer 10) cells)))
+(defn cells-around [cell-pointer cells width] 
+  (drop (- cell-pointer width) (take (+ cell-pointer width 1) cells)))
 
 ;; Interpreter start ---------------------------------------------
 (defn initialize-cells [number] (vec (repeat number 0)))
@@ -165,7 +164,9 @@
             (recur (step interpreter-state))))))))
 
 
-;; Interpreter end ---------------------------------------------
+;; /Interpreter ------------------------------------------------
+
+;; State -------------------------------------------------------
 
 (def initial-interpreter-state {:src ""
                                 :reader-position 0
@@ -180,11 +181,23 @@
 
 (defonce state (r/atom { :sourcecode ""
                         :delay 1
-                        :focus 1
                         :interpreter-state initial-interpreter-state}))
 
+;; /State ------------------------------------------------------
+
+(defn boxes [cells cell-pointer]
+  (let [width 2 
+        cells-immediately-before-pointer (drop (- cell-pointer width) (take cell-pointer cells))
+        cell-at-pointer (nth cells cell-pointer)
+        cells-immediately-after-pointer (take width (drop (+ 1 cell-pointer) cells))]
+    [:div
+      [:span (map #(number-box % "black") cells-immediately-before-pointer)]
+      [:span (number-box cell-at-pointer "red")]
+      [:span (map #(number-box % "black") cells-immediately-after-pointer)]]))
+
 (defn display-running-sourcecode [] 
-  [:div {:style {:resize "none"
+  [:div {:style {:border "1px solid black"
+                 :resize "none"
                  :font-size "2em"
                  :width "100%"
                  :height "100%"
@@ -205,9 +218,10 @@
       [:div {:style {:background-color "white" 
                      :display "inline"
                      :width "100%"}} (drop (+ position 1) source)]])])
-;;     [:div (take position source)])])
+
 (defn display-editable-textbox []
-  [:textarea {:style {:resize "none" 
+  [:textarea {:style {:border "1px solid black"
+                      :resize "none" 
                       :word-wrap "break-word"
                       :word-break "break-all"
                       :font-size "2em"
@@ -221,20 +235,49 @@
                             (let [new-value (-> % .-target .-value)] 
                               (swap! state assoc :sourcecode new-value)))}])
 
+(defn speed-slider []
+  [:div {:style {:float "right"}}
+   [:div {:style {:display "inline" }} (:delay @state)]
+   [:div {:style {:display "inline" }} 
+    [:input {:type "range" 
+                :min "5" 
+                :max "1000" 
+                :value (:delay @state)
+                :on-change #(swap! state assoc :delay (-> % .-target .-value))}]]])
+
+(defn blinker-button []
+     [:p {:style {:padding-top "10px"}}
+      [:button {:type "button" 
+                :on-click #(swap! state assoc :interpreter-state (assoc (:interpreter-state @state) :running (not (:running (:interpreter-state @state)))))
+                }
+       "Blink"]])
+
+(defn evaluate-button []
+     [:p {:style {:padding-top "10px"}}
+      [:button {:type "button" 
+                :disabled (:running (:interpreter-state @state))
+                :on-click #(do (swap! state assoc :interpreter-state initial-interpreter-state)
+                               (swap! state assoc :interpreter-state (assoc (:interpreter-state @state) :src (:sourcecode @state)))
+                               (interpret state))}
+       "Evaluate!"]])
+
 (defn project-root []
   (let [sourcecode-input-disabled (:sourcecode-input-disabled @state)
-        cells-for-display (cells-around (:cell-pointer (:interpreter-state @state)) (:cells (:interpreter-state @state)))]
+        cells-for-display (cells-around (:cell-pointer (:interpreter-state @state)) (:cells (:interpreter-state @state)) 10)]
     [:div {:style {:margin-left "auto"
                    :margin-right "auto"
                    :width "500px"
                    :font-family "Trebuchet MS, Helvetica, sans-serif"}}
-     [:div {:style {:text-align "right"}}
-      [:p  [:input {:type "range" 
-                    :min "5" 
-                    :max "1000" 
-                    :value (:delay @state)
-                    :on-change #(swap! state assoc :delay (-> % .-target .-value))}] 
-       (:delay @state)]]
+     [speed-slider]
+     [:br]
+     [:br]
+     [:div {:style {:position "relative"}} 
+      [:div {:style {:position "absolute"
+                     :left "50%"
+                     :transform "translate(-50%, 0)"}} 
+       [boxes (:cells (:interpreter-state @state)) (:cell-pointer (:interpreter-state @state))]]]
+     [:br]
+     [:br]
      [:p "Write your Brainfuck sourcecode here: " ]
      [:p
       [:div {:type "text" 
@@ -242,20 +285,11 @@
              :style {:width "100%"
                      :height "200px"
                      :font-family "Consolas,Monaco,Lucida Console,Liberation Mono,DejaVu Sans Mono,Bitstream Vera Sans Mono,Courier New, monospace"
-                     :box-shadow "0px 7px 5px #888888, 3px 7px 5px #888888, -3px 7px 5px #888888"
-                     :-moz-box-shadow "none"
-                     :-webkit-box-shadow "none"
                      :border-color "#cccccc" }}
        (if (:running (:interpreter-state @state))
-         (display-running-sourcecode)
-         (display-editable-textbox))]]
-     [:p {:style {:padding-top "10px"}}
-      [:button {:type "button" 
-                :disabled (:running (:interpreter-state @state))
-                :on-click #(do (swap! state assoc :interpreter-state initial-interpreter-state)
-                               (swap! state assoc :interpreter-state (assoc (:interpreter-state @state) :src (:sourcecode @state)))
-                               (interpret state))}
-       "Evaluate!"]]
+         [display-running-sourcecode]
+         [display-editable-textbox])]]
+     [evaluate-button]
      [:p "The result of the sourcecode:" ]
      [:p {:style {
                   :word-wrap "break-word" 
@@ -264,17 +298,8 @@
                   }} (:sourcecode @state)] 
      [:p "should appear here!" ]
      [:p (:printedchars (:interpreter-state @state))]
-     [:p "And here is the ongoing value of the cells around the active cell: " ]
-     [:div (interpose " " (take 10 cells-for-display)) " " [:span {:style {:color "red"}} (nth cells-for-display 10)] " " [:span (interpose " " (drop 11 cells-for-display))]]
-     [:br]
-     [:br]
      [:p "Here is some Brainfuck that prints \"derpa\": "]
-     [:p "++++++++++[>++++++++++<-]>.+.+++++++++++++.--.---------------."]
-     [:div {:style {:float "left"}}
-      [:span (map #(number-box % "black") (take (:focus @state) cells-for-display))]
-      [:span (number-box (nth cells-for-display (:focus @state)) "red")]
-      [:span (map #(number-box % "black") (drop (+ (:focus @state) 1) cells-for-display))]
-      ] ]))
+     [:p "++++++++++[>++++++++++<-]>.+.+++++++++++++.--.---------------."]]))
 
 (defn start []
   (r/render-component
@@ -292,5 +317,3 @@
   ;; your application
   (swap! state update-in [:__figwheel_counter] inc)
   ) 
-
-(swap! state assoc :focus 10)
