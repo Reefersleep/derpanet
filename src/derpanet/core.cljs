@@ -8,31 +8,22 @@
 
 (defn number-box [number text-color]
   (let [box-size (atom 35)] 
-    [:p 
-     {:style {:border-color "black"
-              :float "left"
-              :border-style "solid"
-              :border-width "1px"
-              :width (str @box-size "px")
-              :height (str @box-size "px")
-              :text-align "center"
-              :vertical-align "middle"
-              :position "relative"
-              :color text-color
-              :display "inline"}} [:span {:style {
-                                                  :position "absolute" 
-                                                  :margin "0" 
-                                                  :top "50%" 
-                                                  :left "50%"
-                                                  :transform "translate(-50%, -50%)" 
-                                                  }}(str number)]]))
+    [:div {:style {:border-color "black"
+                   :border-style "solid"
+                   :border-width "1px"
+                   :min-width (str @box-size "px")
+                   :min-height (str @box-size "px")
+                   :position "relative"
+                   :color text-color}} 
+     [:div {:style {:position "absolute" 
+                    :top "50%" 
+                    :left "50%"
+                    :transform "translate(-50%, -50%)" 
+                    }} (str number)]]))
 (defn timeout [ms]
   (let [c (chan)]
     (js/setTimeout (fn [] (close! c)) ms)
     c))
-
-(defn cells-around [cell-pointer cells width] 
-  (drop (- cell-pointer width) (take (+ cell-pointer width 1) cells)))
 
 ;; Interpreter start ---------------------------------------------
 (defn initialize-cells [number] (vec (repeat number 0)))
@@ -181,19 +172,23 @@
 
 (defonce state (r/atom { :sourcecode ""
                         :delay 1
+                        :cell-display-width 3
                         :interpreter-state initial-interpreter-state}))
 
 ;; /State ------------------------------------------------------
 
 (defn boxes [cells cell-pointer]
-  (let [width 2 
+  (let [width (:cell-display-width @state) 
         cells-immediately-before-pointer (drop (- cell-pointer width) (take cell-pointer cells))
         cell-at-pointer (nth cells cell-pointer)
         cells-immediately-after-pointer (take width (drop (+ 1 cell-pointer) cells))]
-    [:div
-      [:span (map #(number-box % "black") cells-immediately-before-pointer)]
-      [:span (number-box cell-at-pointer "red")]
-      [:span (map #(number-box % "black") cells-immediately-after-pointer)]]))
+    [:div {:style {:width "100%"
+                   :display "flex"
+                   :justify-content "center"
+                   :overflow "hidden"}}
+     [:span {:style {:display "flex"}} (map #(number-box % "black") cells-immediately-before-pointer)]
+     [:span {:style {:display "flex"}} (number-box cell-at-pointer "red")]
+     [:span {:style {:display "flex"}} (map #(number-box % "black") cells-immediately-after-pointer)]]))
 
 (defn display-running-sourcecode [] 
   [:div {:style {:border "1px solid black"
@@ -235,47 +230,47 @@
                             (let [new-value (-> % .-target .-value)] 
                               (swap! state assoc :sourcecode new-value)))}])
 
-(defn speed-slider []
+(defn slider [key-in-state range-start range-end]
   [:div {:style {:float "right"}}
-   [:div {:style {:display "inline" }} (:delay @state)]
+   [:div {:style {:display "inline" }} (key-in-state @state)]
    [:div {:style {:display "inline" }} 
     [:input {:type "range" 
-                :min "5" 
-                :max "1000" 
-                :value (:delay @state)
-                :on-change #(swap! state assoc :delay (-> % .-target .-value))}]]])
+             :min range-start
+             :max range-end
+             :value (key-in-state @state)
+             :on-change #(swap! state assoc key-in-state (-> % .-target .-value))}]]])
 
 (defn blinker-button []
-     [:p {:style {:padding-top "10px"}}
-      [:button {:type "button" 
-                :on-click #(swap! state assoc :interpreter-state (assoc (:interpreter-state @state) :running (not (:running (:interpreter-state @state)))))
-                }
-       "Blink"]])
+  [:p {:style {:padding-top "10px"}}
+   [:button {:type "button" 
+             :on-click #(swap! state assoc :interpreter-state (assoc (:interpreter-state @state) :running (not (:running (:interpreter-state @state)))))
+             }
+    "Blink"]])
 
 (defn evaluate-button []
-     [:p {:style {:padding-top "10px"}}
-      [:button {:type "button" 
-                :disabled (:running (:interpreter-state @state))
-                :on-click #(do (swap! state assoc :interpreter-state initial-interpreter-state)
-                               (swap! state assoc :interpreter-state (assoc (:interpreter-state @state) :src (:sourcecode @state)))
-                               (interpret state))}
-       "Evaluate!"]])
+  [:p {:style {:padding-top "10px"}}
+   [:button {:type "button" 
+             :disabled (:running (:interpreter-state @state))
+             :on-click #(do (swap! state assoc :interpreter-state initial-interpreter-state)
+                            (swap! state assoc :interpreter-state (assoc (:interpreter-state @state) :src (:sourcecode @state)))
+                            (interpret state))}
+    "Evaluate!"]])
 
 (defn project-root []
-  (let [sourcecode-input-disabled (:sourcecode-input-disabled @state)
-        cells-for-display (cells-around (:cell-pointer (:interpreter-state @state)) (:cells (:interpreter-state @state)) 10)]
+  (let [sourcecode-input-disabled (:sourcecode-input-disabled @state)]
     [:div {:style {:margin-left "auto"
                    :margin-right "auto"
                    :width "500px"
                    :font-family "Trebuchet MS, Helvetica, sans-serif"}}
-     [speed-slider]
+     [slider :delay 5 1000]
+     [:br]
+     [:br]
+     [:br]
+     [slider :cell-display-width 1 50]
      [:br]
      [:br]
      [:div {:style {:position "relative"}} 
-      [:div {:style {:position "absolute"
-                     :left "50%"
-                     :transform "translate(-50%, 0)"}} 
-       [boxes (:cells (:interpreter-state @state)) (:cell-pointer (:interpreter-state @state))]]]
+      [boxes (:cells (:interpreter-state @state)) (:cell-pointer (:interpreter-state @state))]]
      [:br]
      [:br]
      [:p "Write your Brainfuck sourcecode here: " ]
@@ -299,7 +294,8 @@
      [:p "should appear here!" ]
      [:p (:printedchars (:interpreter-state @state))]
      [:p "Here is some Brainfuck that prints \"derpa\": "]
-     [:p "++++++++++[>++++++++++<-]>.+.+++++++++++++.--.---------------."]]))
+     [:p "++++++++++[>++++++++++<-]>.+.+++++++++++++.--.---------------."]
+     ]))
 
 (defn start []
   (r/render-component
@@ -315,5 +311,4 @@
 (defn on-js-reload []
   ;; optionally touch your app-state to force rerendering depending on
   ;; your application
-  (swap! state update-in [:__figwheel_counter] inc)
-  ) 
+  (swap! state update-in [:__figwheel_counter] inc)) 
