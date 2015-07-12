@@ -9,6 +9,10 @@
                  [org.clojure/core.async "0.1.346.0-17112a-alpha"]
                  [reagent "0.5.0"]]
 
+  :profiles {:dev {:dependencies [[com.cemerick/piggieback "0.2.1"]
+                                  [org.clojure/tools.nrepl "0.2.10"]]
+                   :repl-options {:nrepl-middleware [cemerick.piggieback/wrap-cljs-repl]}}}
+
   :jvm-opts ["-Xmx1G"]
 
   :plugins [[lein-cljsbuild "1.0.5"]
@@ -17,24 +21,24 @@
   :source-paths ["src"]
 
   :clean-targets ^{:protect false} ["resources/public/js/compiled" "target"]
-  
+
   :cljsbuild {
-    :builds [{:id "dev"
-              :source-paths ["src"]
+              :builds [{:id "dev"
+                        :source-paths ["src"]
 
-              :figwheel { :on-jsload "derpanet.core/on-js-reload" }
+                        :figwheel { :on-jsload "derpanet.core/on-js-reload" }
 
-              :compiler {:main derpanet.core
-                         :asset-path "js/compiled/out"
-                         :output-to "resources/public/js/compiled/derpanet.js"
-                         :output-dir "resources/public/js/compiled/out"
-                         :source-map-timestamp true }}
-             {:id "min"
-              :source-paths ["src"]
-              :compiler {:output-to "resources/public/js/compiled/derpanet.js"
-                         :main derpanet.core                         
-                         :optimizations :advanced
-                         :pretty-print false}}]}
+                        :compiler {:main derpanet.core
+                                   :asset-path "js/compiled/out"
+                                   :output-to "resources/public/js/compiled/derpanet.js"
+                                   :output-dir "resources/public/js/compiled/out"
+                                   :source-map-timestamp true }}
+                       {:id "min"
+                        :source-paths ["src"]
+                        :compiler {:output-to "resources/public/js/compiled/derpanet.js"
+                                   :main derpanet.core                         
+                                   :optimizations :advanced
+                                   :pretty-print false}}]}
 
   :figwheel {
              ;; :http-server-root "public" ;; default and assumes "resources" 
@@ -42,7 +46,7 @@
              :css-dirs ["resources/public/css"] ;; watch and update CSS
 
              ;; Start an nREPL server into the running figwheel process
-             ;; :nrepl-port 7888
+             :nrepl-port 7888
 
              ;; Server Ring Handler (optional)
              ;; if you want to embed a ring handler into the figwheel http-kit

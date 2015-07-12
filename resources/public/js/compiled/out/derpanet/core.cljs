@@ -277,11 +277,14 @@
                }} (:sourcecode @state)])
 
 (defn results []
-  [:div
-   [:p "The result of the sourcecode:"]
-   [sourcecode-repeater]
-   [:p "should appear here!" ]
-   [:p (:printedchars (:interpreter-state @state))]])
+  [:div "Output:" 
+  [:div {:style {:border "1px solid teal"
+                 :text-align "center"
+                 :min-height "3em"
+                 :word-wrap "break-word"
+                 :word-break "break-all"
+                 :padding "1em"}}
+   [:p (:printedchars (:interpreter-state @state))]]])
 
 (defn printing-example []
   [:div
@@ -289,35 +292,56 @@
    [:p "++++++++++[>++++++++++<-]>.+.+++++++++++++.--.---------------."]])
 
 (defn brainfuck-reference []
-  [:div "Reference"]) ;;TODO Add a table of the brainfuck commands here
+  [:div "Reference sheet"
+   [:br]
+   [:table.reference {:style {:border "1px solid teal"
+                              :text-align "center"}}
+    [:tr [:th "Character"][:th "Meaning"]]
+    [:tr [:td ">"] [:td "increment the data pointer (to point to the next cell to the right)."]]
+    [:tr [:td "<"] [:td "decrement the data pointer (to point to the next cell to the left)."]]
+    [:tr [:td "+"] [:td "increment (increase by one) the byte at the data pointer."]]
+    [:tr [:td "-"] [:td "decrement (decrease by one) the byte at the data pointer."]]
+    [:tr [:td "."] [:td "output the byte at the data pointer."]]
+    [:tr [:td ","] [:td "accept one byte of input, storing its value in the byte at the data pointer."]]
+    [:tr [:td "["] [:td "if the byte at the data pointer is zero, then instead of moving the instruction pointer forward to the next command, jump it forward to the command after the matching ] command."]]
+    [:tr [:td "]"] [:td "if the byte at the data pointer is nonzero, then instead of moving the instruction pointer forward to the next command, jump it back to the command after the matching [ command."]] 
+    [:tr  [:td {:col-span 2 
+                :style {:border "1px solid black"}} [printing-example]]]]]) 
 
 (defn samples []
   [:div
-  [printing-example]
-  [brainfuck-reference]])
+   [brainfuck-reference]])
 
 (defn project-root []
-  [:div {:style {:margin-left "auto"
-                 :margin-right "auto"
-                 :width "500px"
-                 :font-family "Trebuchet MS, Helvetica, sans-serif"}}
-   [slider :delay 5 1000 "Delay"]
-   [:br]
-   [:br]
-   [:br]
-   [slider :cell-display-width 1 50 "Cells around pointer"]
-   [:br]
-   [:br]
-   [:br]
-   [:br]
-   [boxes (:cells (:interpreter-state @state)) (:cell-pointer (:interpreter-state @state))]
-   [:br]
-   [:br]
-   [:p "Write your Brainfuck sourcecode here: "]
-   [sourcecode-box]
-   [evaluate-button]
-   [results]
-   [samples]
+  [:div#screen {:style {:width "100%"
+}}
+   [:div#left {:style {:float "left"
+                       :width "100%"}}]
+   [:div#right {:style {:float "right"}}
+    [:div {:style {:float "left"}}
+     [slider :delay 5 1000 "Delay"]
+     [:br]
+     [:br]
+     [:br]
+     [slider :cell-display-width 1 50 "Cells around pointer"]
+     [:div {:style {:height "5em"}}]]]
+   [:div#center {:style {:width "500px"
+                         :margin "0 auto"
+                         :font-family "Trebuchet MS, Helvetica, sans-serif"}}
+    [:br]
+    [boxes (:cells (:interpreter-state @state)) (:cell-pointer (:interpreter-state @state))]
+    [:br]
+    [:br]
+    [:p "Write your Brainfuck sourcecode here: "]
+    [sourcecode-box]
+    [evaluate-button]
+    [:br]
+    [:br]
+    [results]
+    [:br]
+    [:br]
+    [:br]
+    [samples]]
    ])
 
 (defn start []
