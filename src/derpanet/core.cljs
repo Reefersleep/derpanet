@@ -240,7 +240,7 @@
              :min range-start
              :max range-end
              :value (key-in-state @state)
-             :on-change #(swap! state assoc key-in-state (-> % .-target .-value))}]]])
+             :on-input #(swap! state assoc key-in-state (-> % .-target .-value))}]]])
 
 (defn blinker-button [] ;;only intended for development
   [:p {:style {:padding-top "10px"}}
