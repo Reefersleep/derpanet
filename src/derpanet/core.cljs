@@ -186,10 +186,11 @@
     [:div {:style {:width "100%"
                    :display "flex"
                    :justify-content "center"
-                   :overflow "hidden"}}
-     [:span {:style {:display "flex"}} (map #(number-box % "black" box-size) cells-immediately-before-pointer)]
-     [:span {:style {:display "flex"}} (number-box cell-at-pointer "darkcyan" box-size)]
-     [:span {:style {:display "flex"}} (map #(number-box % "black" box-size) cells-immediately-after-pointer)]]))
+                   :overflow "hidden"
+                   :clip "inherit"}}
+     [:div {:style {:display "flex"}} (map #(number-box % "black" box-size) cells-immediately-before-pointer)]
+     [:div {:style {:display "flex"}} (number-box cell-at-pointer "darkcyan" box-size)]
+     [:div {:style {:display "flex"}} (map #(number-box % "black" box-size) cells-immediately-after-pointer)]]))
 
 (defn display-running-sourcecode [] 
   [:div {:style {:border "1px solid black"
