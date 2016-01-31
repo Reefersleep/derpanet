@@ -16,6 +16,7 @@
                  [hiccup "1.0.5"]
                  [environ "1.0.2"]
                  [org.clojure/clojurescript "1.7.228" :scope "provided"]
+                 [org.clojure/core.async "0.1.346.0-17112a-alpha"]
                  [prismatic/dommy "1.1.0"]
                  [reagent "0.5.0"]
                  ]
