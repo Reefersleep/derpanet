@@ -185,7 +185,7 @@
 ;; /State ------------------------------------------------------
 
 (defn boxes [cells cell-pointer]
-  (let [width (:cell-display-width @state) 
+  (let [width (int (:cell-display-width @state))
         cells-immediately-before-pointer (drop (- cell-pointer width) (take cell-pointer cells))
         cell-at-pointer (nth cells cell-pointer)
         cells-immediately-after-pointer (take width (drop (+ 1 cell-pointer) cells))
@@ -205,6 +205,7 @@
                  :font-size "2em"
                  :width "100%"
                  :height "100%"
+                 :line-height "44px"
                  :visibility (not (:running (:interpreter-state @state)))}}
    (let [source (:src (:interpreter-state @state))
          position (:reader-position (:interpreter-state @state))]
@@ -215,6 +216,7 @@
                     :word-break "break-all"
                     :word-wrap "break-word"}}
       [:div {:style {:display "inline"
+                     :overflow "none"
                      :width "100%"}} (take position source)]
       [:div {:style {:background-color "turquoise"
                      :display "inline"
@@ -231,6 +233,7 @@
                       :font-size "2em"
                       :width "100%"
                       :height "100%"
+                      :line-height "44px"
                       :font-family "Consolas,Monaco,Lucida Console,Liberation Mono,DejaVu Sans Mono,Bitstream Vera Sans Mono,Courier New, monospace"
                       :visibility (not (:running (:interpreter-state @state)))}
               :disabled (:running (:interpreter-state @state))
@@ -370,16 +373,15 @@
     [samples]]
    ])
 
-(defn start []
-  (r/render-component
-   [project-root]
-   (.getElementById js/document "root")))
+(defn mount-root []
+  (r/render [project-root] (.getElementById js/document "app")))
 
-(start)
+(defn init! []
+  (mount-root))
 
 (enable-console-print!)
 
-(println "Edits to this text should show up in your developer console. LOL")
+(println "Edits to this text should show up in your developer console. LAL")
 
 (defn on-js-reload []
   ;; optionally touch your app-state to force rerendering depending on
