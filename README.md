@@ -5,8 +5,11 @@ A Brainfuck interpreter, visualized.
 ## Usage
 
 Clone it, then 
+
 `cd derpanet`
+
 `lein figwheel`
+
 and visit http:/localhost:3449/
 
 Or visit https://derpanet.herokuapp.com/ 
