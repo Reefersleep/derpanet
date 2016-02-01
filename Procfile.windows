@@ -1,0 +1,1 @@
+web: java -cp target/derpanet.jar clojure.main -m derpanet.server
