@@ -1,6 +1,5 @@
 (ns ^:figwheel-always derpanet.core
   (:require [reagent.core :as r]
-            [figwheel.client :as fw :include-macros true]
             [cljs.core.async :refer [>! <! chan buffer close!
                                      alts!  timeout]]
             [dommy.core :refer-macros [sel1]])
