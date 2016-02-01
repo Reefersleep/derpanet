@@ -10,7 +10,7 @@ Clone it, then
 
 `lein figwheel`
 
-and visit http:/localhost:3449/
+and visit http://localhost:3449/
 
 Or visit https://derpanet.herokuapp.com/ 
 ## License
